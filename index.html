@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bouncy Windows — Make your windows bounce!</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
+
+  body {
+    margin: 0;
+    font-family: 'Fredoka One', cursive, sans-serif;
+    background: linear-gradient(135deg, #2b2bff, #00d4ff);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  h1 {
+    font-size: 3rem;
+    margin-bottom: 0.2em;
+    text-shadow: 2px 2px 5px #0008;
+  }
+
+  p.description {
+    font-size: 1.3rem;
+    max-width: 600px;
+    margin-bottom: 2em;
+    text-shadow: 1px 1px 3px #0007;
+  }
+
+  .buttons {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 3rem;
+  }
+
+  a.button {
+    background: #ff6b6b;
+    padding: 0.8em 2em;
+    border-radius: 50px;
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: white;
+    text-decoration: none;
+    box-shadow: 0 5px #c44848;
+    transition: all 0.25s ease;
+  }
+  a.button:hover {
+    background: #ff5050;
+    box-shadow: 0 7px #a73f3f;
+    transform: translateY(-3px);
+  }
+
+  .bounce-window {
+    width: 200px;
+    max-width: 80vw;
+    animation: bounce 2s ease-in-out infinite;
+    box-shadow: 0 15px 25px rgba(0,0,0,0.4);
+    border-radius: 12px;
+    background: white;
+    overflow: hidden;
+    margin-bottom: 3rem;
+  }
+
+  .bounce-window img {
+    width: 100%;
+    display: block;
+  }
+
+  @keyframes bounce {
+    0%, 100% {
+      transform: translateY(0);
+      box-shadow: 0 15px 25px rgba(0,0,0,0.4);
+    }
+    50% {
+      transform: translateY(-25px);
+      box-shadow: 0 30px 40px rgba(0,0,0,0.6);
+    }
+  }
+
+  footer {
+    margin-top: auto;
+    font-size: 0.9rem;
+    opacity: 0.7;
+  }
+
+  footer a {
+    color: #fff;
+    text-decoration: underline;
+  }
+</style>
+</head>
+<body>
+
+<h1>Bouncy Windows</h1>
+<p class="description">
+  Make your Windows desktop bounce with joy! Bouncy Windows adds a playful bounce effect to your windows, bringing fun and movement to your workflow.
+</p>
+
+<div class="bounce-window" title="Bouncy Windows Preview">
+  <!-- You can replace this with a GIF or screenshot of Bouncy Windows in action -->
+  <img src="https://user-images.githubusercontent.com/34484574/234532108-1a4aab76-195f-4f42-900f-bd1f7aa3a24f.gif" alt="Bouncy Windows bouncing effect preview" />
+</div>
+
+<div class="buttons">
+  <a class="button" href="https://github.com/Roam45/bouncy-windows/releases/download/v1.0.0/publish.zip" download>
+    Download v1.0.0
+  </a>
+  <a class="button" href="https://github.com/Roam45/bouncy-windows" target="_blank" rel="noopener">
+    View on GitHub
+  </a>
+</div>
+
+<footer>
+  Made with 💙 by <a href="https://github.com/Roam45" target="_blank" rel="noopener">Roam45</a>
+</footer>
+
+</body>
+</html>
