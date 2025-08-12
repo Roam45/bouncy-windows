@@ -29,13 +29,11 @@ struct WindowPhysics {
 
 std::map<HWND, WindowPhysics> windowStates;
 bool g_Running = true;
-bool g_CollisionsEnabled = true;
 float g_Gravity = 1.0f;
 float g_WeightScale = 1.0f;
 
 HWND g_MainWnd = nullptr;
 HWND g_GravitySlider = nullptr;
-HWND g_CollisionCheckbox = nullptr;
 HWND g_WeightSlider = nullptr;
 HWND g_FrictionSlider = nullptr;
 HWND g_BounceSlider = nullptr;
@@ -50,7 +48,6 @@ HINSTANCE g_hInstance;
 RECT g_WorkArea = {};
 
 #define IDC_GRAVITY_SLIDER 101
-#define IDC_COLLISION_CHECKBOX 102
 #define IDC_WEIGHT_SLIDER 103
 #define IDC_RECENTER_BUTTON 104
 #define IDC_QUIT_BUTTON 105
@@ -61,7 +58,6 @@ RECT g_WorkArea = {};
 
 void SaveConfig() {
     std::ofstream out("config.ini");
-    out << "collisions=" << (g_CollisionsEnabled ? "1" : "0") << "\n";
     out << "gravity=" << g_Gravity << "\n";
     out << "weightscale=" << g_WeightScale << "\n";
     out << "friction=" << g_Friction << "\n";
@@ -70,7 +66,6 @@ void SaveConfig() {
 
 void SaveDefaultConfig() {
     std::ofstream out("config.ini");
-    out << "collisions=1\n";
     out << "gravity=1.0\n";
     out << "weightscale=1.0\n";
     out << "friction=0.99\n";
@@ -85,9 +80,7 @@ void LoadConfig() {
     }
     std::string line;
     while (std::getline(in, line)) {
-        if (line.find("collisions=") == 0)
-            g_CollisionsEnabled = (line.substr(11) == "1");
-        else if (line.find("gravity=") == 0)
+        if (line.find("gravity=") == 0)
             g_Gravity = std::stof(line.substr(8));
         else if (line.find("weightscale=") == 0)
             g_WeightScale = std::stof(line.substr(12));
@@ -219,27 +212,7 @@ void PhysicsLoop() {
                 if (fabs(state.velocity.y) < 1.0f) state.velocity.y = 0;
             }
 
-            // Collisions between windows
-            if (g_CollisionsEnabled) {
-                for (HWND other : wins) {
-                    if (other == hwnd) continue;
-                    RECT or_;
-                    if (!GetWindowRect(other, &or_)) continue;
-
-                    RECT thisRect = {
-                        (LONG)newPos.x,
-                        (LONG)newPos.y,
-                        (LONG)(newPos.x + w),
-                        (LONG)(newPos.y + h)
-                    };
-                    RECT intersect;
-                    if (IntersectRect(&intersect, &thisRect, &or_)) {
-                        // Basic collision response: invert velocity with damping
-                        state.velocity.x *= -g_BounceDamping;
-                        state.velocity.y *= -g_BounceDamping;
-                    }
-                }
-            }
+            // **Note: collisions removed — windows will overlap freely**
 
             SetWindowPos(hwnd, nullptr, (int)newPos.x, (int)newPos.y, 0, 0,
                 SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
@@ -257,10 +230,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
-        case IDC_COLLISION_CHECKBOX:
-            g_CollisionsEnabled = (SendMessage(g_CollisionCheckbox, BM_GETCHECK, 0, 0) == BST_CHECKED);
-            SaveConfig();
-            break;
         case IDC_QUIT_BUTTON:
             g_Running = false;
             PostQuitMessage(0);
@@ -305,7 +274,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 }
 
 // -- UI --
-
 void CreateUI(HWND hwnd) {
     HFONT hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
 
@@ -321,59 +289,52 @@ void CreateUI(HWND hwnd) {
     SendMessage(g_GravitySlider, TBM_SETTICFREQ, 5, 0);
     AddToolTip(hwnd, g_GravitySlider, L"Adjust the gravity strength");
 
-    // Collision checkbox
-    g_CollisionCheckbox = CreateWindow(L"BUTTON", L"Enable Window Collisions",
-        WS_CHILD | WS_VISIBLE | BS_CHECKBOX,
-        20, 90, 200, 25, hwnd, (HMENU)IDC_COLLISION_CHECKBOX, g_hInstance, nullptr);
-    SendMessage(g_CollisionCheckbox, BM_SETCHECK, g_CollisionsEnabled ? BST_CHECKED : BST_UNCHECKED, 0);
-    AddToolTip(hwnd, g_CollisionCheckbox, L"Toggle collision between windows");
-
-    // Weight scale label + slider
+    // Weight scale label + slider (moved up)
     CreateWindow(L"STATIC", L"Weight Scale (0.1 - 2.0):", WS_CHILD | WS_VISIBLE,
-        20, 125, 180, 20, hwnd, nullptr, g_hInstance, nullptr);
+        20, 85, 180, 20, hwnd, nullptr, g_hInstance, nullptr);
 
     g_WeightSlider = CreateWindow(TRACKBAR_CLASS, nullptr,
         WS_CHILD | WS_VISIBLE | TBS_AUTOTICKS,
-        20, 150, 300, 30, hwnd, (HMENU)IDC_WEIGHT_SLIDER, g_hInstance, nullptr);
+        20, 110, 300, 30, hwnd, (HMENU)IDC_WEIGHT_SLIDER, g_hInstance, nullptr);
     SendMessage(g_WeightSlider, TBM_SETRANGE, TRUE, MAKELPARAM(10, 200));
     SendMessage(g_WeightSlider, TBM_SETPOS, TRUE, (int)(g_WeightScale * 100));
     SendMessage(g_WeightSlider, TBM_SETTICFREQ, 10, 0);
     AddToolTip(hwnd, g_WeightSlider, L"Scale weight of windows by size");
 
-    // Friction label + slider
+    // Friction label + slider (moved up)
     CreateWindow(L"STATIC", L"Friction (0.5 - 1.0):", WS_CHILD | WS_VISIBLE,
-        20, 185, 180, 20, hwnd, nullptr, g_hInstance, nullptr);
+        20, 145, 180, 20, hwnd, nullptr, g_hInstance, nullptr);
 
     g_FrictionSlider = CreateWindow(TRACKBAR_CLASS, nullptr,
         WS_CHILD | WS_VISIBLE | TBS_AUTOTICKS,
-        20, 210, 300, 30, hwnd, (HMENU)IDC_FRICTION_SLIDER, g_hInstance, nullptr);
+        20, 170, 300, 30, hwnd, (HMENU)IDC_FRICTION_SLIDER, g_hInstance, nullptr);
     SendMessage(g_FrictionSlider, TBM_SETRANGE, TRUE, MAKELPARAM(50, 100));
     SendMessage(g_FrictionSlider, TBM_SETPOS, TRUE, (int)(g_Friction * 100));
     SendMessage(g_FrictionSlider, TBM_SETTICFREQ, 5, 0);
     AddToolTip(hwnd, g_FrictionSlider, L"Velocity damping factor");
 
-    // Bounce label + slider
+    // Bounce label + slider (moved up)
     CreateWindow(L"STATIC", L"Bounce Damping (0.1 - 1.0):", WS_CHILD | WS_VISIBLE,
-        20, 245, 180, 20, hwnd, nullptr, g_hInstance, nullptr);
+        20, 205, 180, 20, hwnd, nullptr, g_hInstance, nullptr);
 
     g_BounceSlider = CreateWindow(TRACKBAR_CLASS, nullptr,
         WS_CHILD | WS_VISIBLE | TBS_AUTOTICKS,
-        20, 270, 300, 30, hwnd, (HMENU)IDC_BOUNCE_SLIDER, g_hInstance, nullptr);
+        20, 230, 300, 30, hwnd, (HMENU)IDC_BOUNCE_SLIDER, g_hInstance, nullptr);
     SendMessage(g_BounceSlider, TBM_SETRANGE, TRUE, MAKELPARAM(10, 100));
     SendMessage(g_BounceSlider, TBM_SETPOS, TRUE, (int)(g_BounceDamping * 100));
     SendMessage(g_BounceSlider, TBM_SETTICFREQ, 5, 0);
     AddToolTip(hwnd, g_BounceSlider, L"Damping factor on bounce");
 
-    // Recenter button
+    // Recenter button (moved up)
     g_RecCenterButton = CreateWindow(L"BUTTON", L"Recenter Windows",
         WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-        20, 310, 150, 30, hwnd, (HMENU)IDC_RECENTER_BUTTON, g_hInstance, nullptr);
+        20, 270, 150, 30, hwnd, (HMENU)IDC_RECENTER_BUTTON, g_hInstance, nullptr);
     AddToolTip(hwnd, g_RecCenterButton, L"Move all windows to screen center");
 
-    // Quit button
+    // Quit button (moved up)
     g_QuitButton = CreateWindow(L"BUTTON", L"Quit",
         WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-        200, 310, 120, 30, hwnd, (HMENU)IDC_QUIT_BUTTON, g_hInstance, nullptr);
+        200, 270, 120, 30, hwnd, (HMENU)IDC_QUIT_BUTTON, g_hInstance, nullptr);
     AddToolTip(hwnd, g_QuitButton, L"Exit this program");
 
     SendMessage(hwnd, WM_SETFONT, (WPARAM)hFont, TRUE);
